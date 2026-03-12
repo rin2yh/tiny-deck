@@ -3,7 +3,7 @@
 tinygo-keebで作成したzero-kb02を使って
 Xxx-deckみたいにMacをちょっとだけ便利にします。
 
-ハード：waveshare-rp2040-zero
+マイコン：waveshare-rp2040-zero
 
 ## 実装済み
 - CPU使用率を表示する
