@@ -5,6 +5,8 @@ import (
 	"machine"
 	"time"
 
+	"github.com/rin2yh/tiny-deck/internal/driver"
+	"github.com/rin2yh/tiny-deck/internal/keyboard"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
 	"tinygo.org/x/tinyfont/freemono"
@@ -25,8 +27,32 @@ func main() {
 		Height:   64,
 		Rotation: ssd1306.ROTATION_180,
 	})
-
 	display.ClearDisplay()
+
+	ws := driver.NewWS2812B(machine.GPIO1)
+	colPins := []machine.Pin{
+		machine.GPIO5,
+		machine.GPIO6,
+		machine.GPIO7,
+		machine.GPIO8,
+	}
+
+	rowPins := []machine.Pin{
+		machine.GPIO9,
+		machine.GPIO10,
+		machine.GPIO11,
+	}
+
+	for _, c := range colPins {
+		c.Configure(machine.PinConfig{Mode: machine.PinOutput})
+		c.Low()
+	}
+
+	for _, c := range rowPins {
+		c.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+	}
+
+	keyboard.StartupAnimation(ws, len(rowPins)*len(colPins))
 
 	// USB Serial
 	serial := machine.Serial
