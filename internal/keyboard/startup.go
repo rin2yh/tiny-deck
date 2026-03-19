@@ -1,11 +1,38 @@
 package keyboard
 
 import (
+	"machine"
 	"time"
 
 	"github.com/rin2yh/tiny-deck/internal/color"
 	"github.com/rin2yh/tiny-deck/internal/driver"
 )
+
+func Setup() int {
+	colPins := []machine.Pin{
+		machine.GPIO5,
+		machine.GPIO6,
+		machine.GPIO7,
+		machine.GPIO8,
+	}
+
+	rowPins := []machine.Pin{
+		machine.GPIO9,
+		machine.GPIO10,
+		machine.GPIO11,
+	}
+
+	for _, c := range colPins {
+		c.Configure(machine.PinConfig{Mode: machine.PinOutput})
+		c.Low()
+	}
+
+	for _, c := range rowPins {
+		c.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+	}
+
+	return len(rowPins) * len(colPins)
+}
 
 func StartupAnimation(ws *driver.WS2812B, matrix int) {
 	colors := make([]uint32, matrix)

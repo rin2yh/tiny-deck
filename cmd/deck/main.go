@@ -30,29 +30,8 @@ func main() {
 	display.ClearDisplay()
 
 	ws := driver.NewWS2812B(machine.GPIO1)
-	colPins := []machine.Pin{
-		machine.GPIO5,
-		machine.GPIO6,
-		machine.GPIO7,
-		machine.GPIO8,
-	}
-
-	rowPins := []machine.Pin{
-		machine.GPIO9,
-		machine.GPIO10,
-		machine.GPIO11,
-	}
-
-	for _, c := range colPins {
-		c.Configure(machine.PinConfig{Mode: machine.PinOutput})
-		c.Low()
-	}
-
-	for _, c := range rowPins {
-		c.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-	}
-
-	keyboard.StartupAnimation(ws, len(rowPins)*len(colPins))
+	matrix := keyboard.Setup()
+	keyboard.StartupAnimation(ws, matrix)
 
 	// USB Serial
 	serial := machine.Serial
