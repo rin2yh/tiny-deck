@@ -28,7 +28,7 @@ func main() {
 			continue
 		}
 
-		line := fmt.Sprintf("%.2f\n", v[0])
+		line := fmt.Sprintf("cpu:%.2f%%\n", v[0])
 		_, err = port.Write([]byte(line))
 		if err != nil {
 			log.Println("error occurred: %w", err)
