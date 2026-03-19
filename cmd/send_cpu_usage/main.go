@@ -27,13 +27,21 @@ func main() {
 		if err != nil {
 			continue
 		}
+
 		line := fmt.Sprintf("%.2f\n", v[0])
-		port.Write([]byte(line))
+		_, err = port.Write([]byte(line))
+		if err != nil {
+			log.Println("error occurred: %w", err)
+		}
 	}
 }
 
 func openPort(mode *serial.Mode) (serial.Port, error) {
-	ports, _ := serial.GetPortsList()
+	ports, err := serial.GetPortsList()
+	if err != nil {
+		return nil, err
+	}
+
 	for _, p := range ports {
 		if strings.Contains(p, "usbmodem") {
 			port, err := serial.Open(p, mode)
