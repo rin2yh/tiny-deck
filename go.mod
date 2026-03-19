@@ -4,11 +4,13 @@ go 1.25.0
 
 require (
 	github.com/shirou/gopsutil/v4 v4.26.2
+	go.bug.st/serial v1.6.4
 	tinygo.org/x/drivers v0.34.0
 	tinygo.org/x/tinyfont v0.6.0
 )
 
 require (
+	github.com/creack/goselect v0.1.2 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect

@@ -6,4 +6,4 @@ go = "1.25.0"
 run = "tinygo flash --target waveshare-rp2040-zero --size short ./cmd/tiny_monitor"
 
 [tasks.send]
-run = "go run ./cmd/send_cpu_usage > /dev/cu.usbmodem101"
+run = "go run ./cmd/send_cpu_usage"
