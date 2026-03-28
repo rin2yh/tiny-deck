@@ -8,7 +8,7 @@ import (
 	"github.com/rin2yh/tiny-deck/internal/driver"
 )
 
-func Setup() int {
+func Setup() *Scanner {
 	colPins := []machine.Pin{
 		machine.GPIO5,
 		machine.GPIO6,
@@ -31,10 +31,15 @@ func Setup() int {
 		c.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
 
-	return len(rowPins) * len(colPins)
+	return &Scanner{
+		cols: colPins,
+		rows: rowPins,
+		keys: make([]bool, len(rowPins)*len(colPins)),
+	}
 }
 
-func StartupAnimation(ws *driver.WS2812B, matrix int) {
+func StartupAnimation(ws *driver.WS2812B, sc *Scanner) {
+	matrix := sc.KeyCount()
 	colors := make([]uint32, matrix)
 	baseHue := 0
 	start := time.Now()

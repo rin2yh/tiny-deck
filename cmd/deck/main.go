@@ -28,15 +28,21 @@ func main() {
 	disp.ClearDisplay()
 
 	ws := driver.NewWS2812B(machine.GPIO1)
-	matrix := keyboard.Setup()
-	keyboard.StartupAnimation(ws, matrix)
+	scanner := keyboard.Setup()
+	keyboard.StartupAnimation(ws, scanner)
+
+	layers := keyboard.NewLayerState()
+	layerKey := keyboard.NewLongPressDetector(11, 1000*time.Millisecond)
 
 	// USB Serial
 	serial := machine.Serial
 	serial.Configure(machine.UARTConfig{})
 
-	m := display.NewMetrics(disp)
+	m := display.NewMetrics(disp, func() string { return layers.Current().String() })
 	for {
+		if layerKey.Update(scanner.Scan()) {
+			layers.Toggle()
+		}
 		m.Update(serial)
 		time.Sleep(10 * time.Millisecond)
 	}
