@@ -12,6 +12,49 @@ import (
 	"tinygo.org/x/tinyfont/freemono"
 )
 
+type LineBuffer struct {
+	data [128]byte
+	n    int
+}
+
+func (b *LineBuffer) Add(c byte) (completed bool) {
+	if c == '\n' {
+		return true
+	}
+	if b.n < len(b.data) {
+		b.data[b.n] = c
+		b.n++
+	}
+	return false
+}
+
+func (b *LineBuffer) String() string {
+	return string(b.data[:b.n])
+}
+
+func (b *LineBuffer) Reset() {
+	b.n = 0
+}
+
+type SerialReader struct {
+	buf LineBuffer
+}
+
+func (r *SerialReader) Read(serial machine.Serialer) (completed bool) {
+	if serial.Buffered() == 0 {
+		return false
+	}
+
+	b, _ := serial.ReadByte()
+	return r.buf.Add(b)
+}
+
+func (r *SerialReader) Line() string {
+	s := r.buf.String()
+	r.buf.Reset()
+	return s
+}
+
 func main() {
 	// I2C (OLED)
 	machine.I2C0.Configure(machine.I2CConfig{
@@ -37,29 +80,24 @@ func main() {
 	serial := machine.Serial
 	serial.Configure(machine.UARTConfig{})
 
-	line := ""
+	var line string
 	white := color.RGBA{255, 255, 255, 255}
 
+	serialReader := SerialReader{}
 	for {
-		if serial.Buffered() > 0 {
-			b, _ := serial.ReadByte()
+		if serialReader.Read(serial) {
+			line = serialReader.Line()
+			display.ClearBuffer()
+			tinyfont.WriteLine(
+				display,
+				&freemono.Regular9pt7b,
+				10,
+				40,
+				line,
+				white,
+			)
 
-			if b == '\n' {
-				display.ClearBuffer()
-				tinyfont.WriteLine(
-					display,
-					&freemono.Regular9pt7b,
-					10,
-					40,
-					line,
-					white,
-				)
-
-				display.Display()
-				line = ""
-			} else {
-				line += string(b)
-			}
+			display.Display()
 		}
 
 		time.Sleep(10 * time.Millisecond)
