@@ -6,7 +6,6 @@ import (
 
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
-	"tinygo.org/x/tinyfont/freemono"
 	"tinygo.org/x/tinyfont/proggy"
 )
 
@@ -86,6 +85,6 @@ func (m *Metrics) Update(serial machine.Serialer) {
 
 	m.display.ClearBuffer()
 	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 8, m.lastLayerLabel, white)
-	tinyfont.WriteLine(m.display, &freemono.Regular9pt7b, 10, 40, m.lastLine, white)
+	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 40, m.lastLine, white)
 	m.display.Display()
 }
