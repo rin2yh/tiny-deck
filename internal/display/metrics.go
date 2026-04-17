@@ -53,6 +53,13 @@ func (r *serialReader) line() string {
 	return s
 }
 
+type Command int
+
+const (
+	CommandNone Command = iota
+	CommandNotify
+)
+
 type Metrics struct {
 	display        *ssd1306.Device
 	reader         serialReader
@@ -66,25 +73,30 @@ func NewMetrics(d *ssd1306.Device, layerName func() string) Metrics {
 	return Metrics{display: d, layerName: layerName}
 }
 
-func (m *Metrics) Update(serial machine.Serialer) {
+func (m *Metrics) Update(serial machine.Serialer) Command {
 	lineChanged := m.reader.read(serial)
 	currentLayer := m.layerName()
 	layerChanged := currentLayer != m.lastLayer
 
-	if !lineChanged && !layerChanged {
-		return
-	}
-
 	if lineChanged {
-		m.lastLine = m.reader.line()
+		line := m.reader.line()
+		if line == "notify" {
+			return CommandNotify
+		}
+		m.lastLine = line
 	}
 	if layerChanged {
 		m.lastLayer = currentLayer
 		m.lastLayerLabel = "[" + currentLayer + "]"
 	}
 
+	if !lineChanged && !layerChanged {
+		return CommandNone
+	}
+
 	m.display.ClearBuffer()
 	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 8, m.lastLayerLabel, white)
 	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 40, m.lastLine, white)
 	m.display.Display()
+	return CommandNone
 }

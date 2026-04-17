@@ -43,7 +43,10 @@ func main() {
 		if layerKey.Update(scanner.Scan()) {
 			layers.Toggle()
 		}
-		m.Update(serial)
+		cmd := m.Update(serial)
+		if cmd == display.CommandNotify {
+			keyboard.NotificationAnimation(ws, scanner.KeyCount())
+		}
 		time.Sleep(10 * time.Millisecond)
 	}
 }
