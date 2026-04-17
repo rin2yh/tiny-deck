@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rin2yh/tiny-deck/internal/volume"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"go.bug.st/serial"
 )
@@ -22,12 +23,13 @@ func main() {
 	mode := &serial.Mode{BaudRate: 115200}
 	port, err := openPort(mode)
 	if err != nil {
-		log.Fatalf("failed to open port: %w", err)
+		log.Fatalf("failed to open port: %v", err)
 	}
 	defer port.Close()
 
 	var mu sync.Mutex
 	go watchNotifications(port, &mu)
+	go watchVolumeCommands(port)
 
 	for {
 		v, err := cpu.Percent(interval, false)
@@ -40,7 +42,7 @@ func main() {
 		_, err = port.Write([]byte(line))
 		mu.Unlock()
 		if err != nil {
-			log.Println("error occurred: %w", err)
+			log.Printf("error occurred: %v", err)
 		}
 	}
 }
@@ -73,6 +75,30 @@ func watchNotifications(port serial.Port, mu *sync.Mutex) {
 	}
 	if err := scanner.Err(); err != nil {
 		log.Printf("log stream scanner error: %v", err)
+	}
+}
+
+func watchVolumeCommands(port serial.Port) {
+	scanner := bufio.NewScanner(port)
+	for scanner.Scan() {
+		line := scanner.Text()
+		var script string
+		switch line {
+		case volume.CmdUp:
+			script = "set volume output volume (output volume of (get volume settings) + 5)"
+		case volume.CmdDown:
+			script = "set volume output volume (output volume of (get volume settings) - 5)"
+		case volume.CmdMute:
+			script = "set volume output muted not (output muted of (get volume settings))"
+		}
+		if script != "" {
+			if out, err := exec.Command("osascript", "-e", script).CombinedOutput(); err != nil {
+				log.Printf("[vol] osascript error: %v, output: %s", err, out)
+			}
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Printf("volume command scanner error: %v", err)
 	}
 }
 

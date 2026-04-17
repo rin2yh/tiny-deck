@@ -7,7 +7,15 @@ import (
 	"github.com/rin2yh/tiny-deck/internal/display"
 	"github.com/rin2yh/tiny-deck/internal/driver"
 	"github.com/rin2yh/tiny-deck/internal/keyboard"
+	"github.com/rin2yh/tiny-deck/internal/volume"
 	"tinygo.org/x/drivers/ssd1306"
+)
+
+// TinyGoでヒープ再確保を避けるためパッケージレベルで確保
+var (
+	serialVolUp   = []byte(volume.CmdUp + "\n")
+	serialVolDown = []byte(volume.CmdDown + "\n")
+	serialMute    = []byte(volume.CmdMute + "\n")
 )
 
 func main() {
@@ -38,6 +46,8 @@ func main() {
 	serial := machine.Serial
 	serial.Configure(machine.UARTConfig{})
 
+	enc := keyboard.NewEncoder(machine.GPIO3, machine.GPIO4, machine.GPIO2)
+
 	m := display.NewMetrics(disp, func() string { return layers.Current().String() })
 	for {
 		if layerKey.Update(scanner.Scan()) {
@@ -46,6 +56,14 @@ func main() {
 		cmd := m.Update(serial)
 		if cmd == display.CommandNotify {
 			keyboard.NotificationAnimation(ws, scanner.KeyCount())
+		}
+		switch enc.Update() {
+		case keyboard.EncoderVolumeUp:
+			serial.Write(serialVolUp)
+		case keyboard.EncoderVolumeDown:
+			serial.Write(serialVolDown)
+		case keyboard.EncoderMute:
+			serial.Write(serialMute)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
