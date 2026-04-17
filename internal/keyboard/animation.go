@@ -15,7 +15,7 @@ func NotificationAnimation(ws *driver.WS2812B, matrix int) {
 	n := len(outerKeys)
 	start := time.Now()
 
-	for time.Since(start) < 2*time.Second {
+	for time.Since(start) < 4*time.Second {
 		for j, idx := range outerKeys {
 			offset := (j * 256) / n
 			pos := uint8((baseHue + offset) % 256)

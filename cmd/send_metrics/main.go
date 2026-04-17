@@ -2,9 +2,13 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -12,11 +16,14 @@ import (
 	"github.com/rin2yh/tiny-deck/internal/volume"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"go.bug.st/serial"
+	_ "modernc.org/sqlite"
 )
 
 const (
-	interval  = time.Second * 2
-	notifyMsg = "notify\n"
+	interval       = time.Second * 2
+	pollInterval   = 500 * time.Millisecond
+	notifyMsg      = "notify\n"
+	notificationDB = "Library/Group Containers/group.com.apple.usernoted/db2/db"
 )
 
 func main() {
@@ -48,33 +55,40 @@ func main() {
 }
 
 func watchNotifications(port serial.Port, mu *sync.Mutex) {
-	cmd := exec.Command("log", "stream",
-		"--predicate", `process == "UserNotificationsServer"`,
-		"--style", "compact",
-	)
-	stdout, err := cmd.StdoutPipe()
+	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Printf("failed to get stdout pipe: %v", err)
+		log.Printf("failed to get home dir: %v", err)
 		return
 	}
-	if err := cmd.Start(); err != nil {
-		log.Printf("failed to start log stream: %v", err)
-		return
-	}
-	defer cmd.Wait()
+	dbPath := filepath.Join(home, notificationDB)
 
-	var lastNotify time.Time
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		if time.Since(lastNotify) > time.Second {
+	db, err := sql.Open("sqlite", "file:"+dbPath+"?mode=ro")
+	if err != nil {
+		log.Printf("failed to open notification DB: %v", err)
+		return
+	}
+	defer db.Close()
+
+	var lastMax float64 // 0 = not yet initialized; delivered_date is always > 0
+
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		ctx, cancel := context.WithTimeout(context.Background(), pollInterval/2)
+		var val float64
+		err := db.QueryRowContext(ctx, "SELECT MAX(delivered_date) FROM record").Scan(&val)
+		cancel()
+		if err != nil {
+			log.Printf("notification DB query error: %v", err)
+			continue
+		}
+		if lastMax > 0 && val > lastMax {
 			mu.Lock()
 			port.Write([]byte(notifyMsg))
 			mu.Unlock()
-			lastNotify = time.Now()
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		log.Printf("log stream scanner error: %v", err)
+		lastMax = val
 	}
 }
 
