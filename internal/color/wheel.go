@@ -22,3 +22,12 @@ func FillAll(n int, c uint32) []uint32 {
 	return colors
 }
 
+// Gradient は 0..100 に正規化済みの pct を前提とする。
+func Gradient(pct float32) (uint8, uint8, uint8) {
+	if pct <= 50 {
+		t := pct / 50
+		return 255, uint8(255 * t), 0
+	}
+	t := (pct - 50) / 50
+	return uint8(255 * (1 - t)), 255, 0
+}

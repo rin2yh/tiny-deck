@@ -3,6 +3,7 @@ package display
 import (
 	"image/color"
 	"machine"
+	"strconv"
 	"strings"
 
 	"tinygo.org/x/drivers/ssd1306"
@@ -60,6 +61,12 @@ type Command int
 const (
 	CommandNone Command = iota
 	CommandNotify
+	CommandMetricsChanged
+)
+
+const (
+	prefixCPU = "cpu:"
+	prefixMem = "mem:"
 )
 
 type Metrics struct {
@@ -70,6 +77,22 @@ type Metrics struct {
 	lastLayerLabel string
 	lastCPU        string
 	lastMem        string
+	lastCPUVal     float32
+	lastMemVal     float32
+}
+
+func (m *Metrics) CPUPercent() float32 { return m.lastCPUVal }
+func (m *Metrics) MemPercent() float32 { return m.lastMemVal }
+
+func parsePercent(line, prefix string) (float32, bool) {
+	s := strings.TrimPrefix(line, prefix)
+	s = strings.TrimSuffix(s, "%")
+	s = strings.TrimSpace(s)
+	v, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		return 0, false
+	}
+	return float32(v), true
 }
 
 func NewMetrics(d *ssd1306.Device, layerName func() string) Metrics {
@@ -81,17 +104,34 @@ func (m *Metrics) Update(serial machine.Serialer) Command {
 	currentLayer := m.layerName()
 	layerChanged := currentLayer != m.lastLayer
 
+	metricsChanged := false
 	if lineChanged {
 		line := m.reader.line()
 		if line == "notify" {
 			return CommandNotify
 		}
+		changed := false
 		switch {
-		case strings.HasPrefix(line, "cpu:"):
-			m.lastCPU = line
-		case strings.HasPrefix(line, "mem:"):
-			m.lastMem = line
+		case strings.HasPrefix(line, prefixCPU):
+			if line != m.lastCPU {
+				m.lastCPU = line
+				if v, ok := parsePercent(line, prefixCPU); ok {
+					m.lastCPUVal = v
+					metricsChanged = true
+				}
+				changed = true
+			}
+		case strings.HasPrefix(line, prefixMem):
+			if line != m.lastMem {
+				m.lastMem = line
+				if v, ok := parsePercent(line, prefixMem); ok {
+					m.lastMemVal = v
+					metricsChanged = true
+				}
+				changed = true
+			}
 		}
+		lineChanged = changed
 	}
 	if layerChanged {
 		m.lastLayer = currentLayer
@@ -107,5 +147,8 @@ func (m *Metrics) Update(serial machine.Serialer) Command {
 	tinyfont.WriteLine(m.display, &freemono.Regular9pt7b, 4, 40, m.lastCPU, white)
 	tinyfont.WriteLine(m.display, &freemono.Regular9pt7b, 4, 58, m.lastMem, white)
 	m.display.Display()
+	if metricsChanged {
+		return CommandMetricsChanged
+	}
 	return CommandNone
 }

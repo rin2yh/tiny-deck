@@ -59,8 +59,11 @@ func main() {
 			layers.Toggle()
 		}
 		cmd := m.Update(serial)
-		if cmd == display.CommandNotify {
+		switch cmd {
+		case display.CommandNotify:
 			keyboard.NotificationAnimation(ws, scanner.KeyCount())
+		case display.CommandMetricsChanged:
+			keyboard.RenderMetrics(ws, scanner.KeyCount(), m.CPUPercent(), m.MemPercent())
 		}
 		switch enc.Update() {
 		case keyboard.EncoderVolumeUp:
