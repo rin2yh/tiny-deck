@@ -2,6 +2,9 @@
 "aqua:tinygo-org/tinygo" = "latest"
 go = "1.25.0"
 
+[settings]
+go.set_goroot = false
+
 [tasks.flash]
 run = "tinygo flash --target waveshare-rp2040-zero --size short ./cmd/deck"
 
