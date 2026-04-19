@@ -5,5 +5,5 @@ go = "1.25.0"
 [tasks.flash]
 run = "tinygo flash --target waveshare-rp2040-zero --size short ./cmd/deck"
 
-[tasks.send]
-run = "go run ./cmd/send_metrics"
+[tasks.host]
+run = "go run ./cmd/host_daemon"
