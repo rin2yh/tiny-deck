@@ -9,10 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/rin2yh/tiny-deck/internal/serial/port"
 	"github.com/rin2yh/tiny-deck/internal/volume"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/mem"
@@ -29,15 +29,15 @@ const (
 
 func main() {
 	mode := &serial.Mode{BaudRate: 115200}
-	port, err := openPort(mode)
+	sp, err := port.Open(mode)
 	if err != nil {
 		log.Fatalf("failed to open port: %v", err)
 	}
-	defer port.Close()
+	defer sp.Close()
 
 	var mu sync.Mutex
-	go watchNotifications(port, &mu)
-	go watchVolumeCommands(port)
+	go watchNotifications(sp, &mu)
+	go watchVolumeCommands(sp)
 
 	for {
 		v, err := cpu.Percent(interval, false)
@@ -51,15 +51,15 @@ func main() {
 
 		line := fmt.Sprintf("cpu:%.2f%%\nmem:%.2f%%\n", v[0], vm.UsedPercent)
 		mu.Lock()
-		_, err = port.Write([]byte(line))
+		_, err = sp.Write([]byte(line))
 		mu.Unlock()
 		if err != nil {
-			log.Printf("error occurred: %v", err)
+			log.Fatalf("serial write error: %v", err)
 		}
 	}
 }
 
-func watchNotifications(port serial.Port, mu *sync.Mutex) {
+func watchNotifications(sp serial.Port, mu *sync.Mutex) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Printf("failed to get home dir: %v", err)
@@ -90,15 +90,18 @@ func watchNotifications(port serial.Port, mu *sync.Mutex) {
 		}
 		if lastMax > 0 && val > lastMax {
 			mu.Lock()
-			port.Write([]byte(notifyMsg))
+			_, err := sp.Write([]byte(notifyMsg))
 			mu.Unlock()
+			if err != nil {
+				log.Printf("notify write error: %v", err)
+			}
 		}
 		lastMax = val
 	}
 }
 
-func watchVolumeCommands(port serial.Port) {
-	scanner := bufio.NewScanner(port)
+func watchVolumeCommands(sp serial.Port) {
+	scanner := bufio.NewScanner(sp)
 	for scanner.Scan() {
 		line := scanner.Text()
 		var script string
@@ -119,23 +122,4 @@ func watchVolumeCommands(port serial.Port) {
 	if err := scanner.Err(); err != nil {
 		log.Printf("volume command scanner error: %v", err)
 	}
-}
-
-func openPort(mode *serial.Mode) (serial.Port, error) {
-	ports, err := serial.GetPortsList()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, p := range ports {
-		if strings.Contains(p, "usbmodem") {
-			port, err := serial.Open(p, mode)
-			if err == nil {
-				fmt.Println("connected:", p)
-				return port, nil
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("serial port not found")
 }

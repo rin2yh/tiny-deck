@@ -10,3 +10,9 @@ run = "tinygo flash --target waveshare-rp2040-zero --size short ./cmd/deck"
 
 [tasks.host]
 run = "go run ./cmd/host_daemon"
+
+[tasks.install]
+run = "bash scripts/install.sh"
+
+[tasks.uninstall]
+run = "bash scripts/uninstall.sh"
