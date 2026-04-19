@@ -12,6 +12,10 @@
     <false/>
     <key>KeepAlive</key>
     <false/>
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
     <key>StandardOutPath</key>
     <string>{{LOG_PATH}}</string>
     <key>StandardErrorPath</key>
@@ -20,8 +24,10 @@
     <dict>
         <key>com.apple.iokit.matching</key>
         <dict>
-            <key>com.apple.device-attach</key>
+            <key>com.github.rin2yh.tiny-deck.attach</key>
             <dict>
+                <key>IOProviderClass</key>
+                <string>IOUSBHostDevice</string>
                 <key>idVendor</key>
                 <integer>11914</integer>
                 <key>idProduct</key>

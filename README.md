@@ -45,3 +45,16 @@ mise run install
 ```sh
 mise run uninstall
 ```
+
+### 再インストール (多重起動してしまった場合の掃除付き)
+
+plist の IOKit マッチング設定ミス等で複数プロセスが同時起動してしまった場合、
+`install.sh` を走らせる前に稼働中のデーモンを明示的に止めてから入れ直す。
+
+```sh
+launchctl bootout "gui/${UID}/com.github.rin2yh.tiny-deck" 2>/dev/null || true
+pkill -f "${HOME}/.local/bin/tiny-deck-host" || true
+mise run install
+```
+
+背景は [docs/2026-04-20-usb-attach-kernel-panic.md](docs/2026-04-20-usb-attach-kernel-panic.md) を参照。
