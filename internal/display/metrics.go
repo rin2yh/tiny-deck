@@ -3,6 +3,7 @@ package display
 import (
 	"image/color"
 	"machine"
+	"strings"
 
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
@@ -66,7 +67,8 @@ type Metrics struct {
 	layerName      func() string
 	lastLayer      string
 	lastLayerLabel string
-	lastLine       string
+	lastCPU        string
+	lastMem        string
 }
 
 func NewMetrics(d *ssd1306.Device, layerName func() string) Metrics {
@@ -83,7 +85,12 @@ func (m *Metrics) Update(serial machine.Serialer) Command {
 		if line == "notify" {
 			return CommandNotify
 		}
-		m.lastLine = line
+		switch {
+		case strings.HasPrefix(line, "cpu:"):
+			m.lastCPU = line
+		case strings.HasPrefix(line, "mem:"):
+			m.lastMem = line
+		}
 	}
 	if layerChanged {
 		m.lastLayer = currentLayer
@@ -96,7 +103,8 @@ func (m *Metrics) Update(serial machine.Serialer) Command {
 
 	m.display.ClearBuffer()
 	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 8, m.lastLayerLabel, white)
-	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 40, m.lastLine, white)
+	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 40, m.lastCPU, white)
+	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 10, 56, m.lastMem, white)
 	m.display.Display()
 	return CommandNone
 }

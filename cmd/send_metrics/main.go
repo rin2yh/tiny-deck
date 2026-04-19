@@ -15,6 +15,7 @@ import (
 
 	"github.com/rin2yh/tiny-deck/internal/volume"
 	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/mem"
 	"go.bug.st/serial"
 	_ "modernc.org/sqlite"
 )
@@ -43,8 +44,12 @@ func main() {
 		if err != nil {
 			continue
 		}
+		vm, err := mem.VirtualMemory()
+		if err != nil {
+			continue
+		}
 
-		line := fmt.Sprintf("cpu:%.2f%%\n", v[0])
+		line := fmt.Sprintf("cpu:%.2f%%\nmem:%.2f%%\n", v[0], vm.UsedPercent)
 		mu.Lock()
 		_, err = port.Write([]byte(line))
 		mu.Unlock()

@@ -6,6 +6,7 @@ require (
 	github.com/shirou/gopsutil/v4 v4.26.2
 	github.com/tinygo-org/pio v0.3.0
 	go.bug.st/serial v1.6.4
+	modernc.org/sqlite v1.48.2
 	tinygo.org/x/drivers v0.34.0
 	tinygo.org/x/tinyfont v0.6.0
 )
@@ -29,5 +30,4 @@ require (
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.48.2 // indirect
 )
