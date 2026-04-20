@@ -14,14 +14,6 @@ func Wheel(pos uint8) (uint8, uint8, uint8) {
 	}
 }
 
-func FillAll(n int, c uint32) []uint32 {
-	colors := make([]uint32, n)
-	for i := range colors {
-		colors[i] = c
-	}
-	return colors
-}
-
 // Gradient は 0..100 に正規化済みの pct を前提とする。
 func Gradient(pct float32) (uint8, uint8, uint8) {
 	if pct <= 50 {

@@ -1,29 +1,28 @@
-package keyboard
+package led
 
 import (
 	"github.com/rin2yh/tiny-deck/internal/color"
 	"github.com/rin2yh/tiny-deck/internal/driver"
+	"github.com/rin2yh/tiny-deck/internal/keyboard"
 )
 
 var (
 	// Left 2 columns, bottom-to-top
 	cpuBarOrder = []int{
-		int(KeyC0R2), int(KeyC1R2),
-		int(KeyC0R1), int(KeyC1R1),
-		int(KeyC0R0), int(KeyC1R0),
+		int(keyboard.KeyC0R2), int(keyboard.KeyC1R2),
+		int(keyboard.KeyC0R1), int(keyboard.KeyC1R1),
+		int(keyboard.KeyC0R0), int(keyboard.KeyC1R0),
 	}
 	// Right 2 columns, bottom-to-top
 	memBarOrder = []int{
-		int(KeyC2R2), int(KeyC3R2),
-		int(KeyC2R1), int(KeyC3R1),
-		int(KeyC2R0), int(KeyC3R0),
+		int(keyboard.KeyC2R2), int(keyboard.KeyC3R2),
+		int(keyboard.KeyC2R1), int(keyboard.KeyC3R1),
+		int(keyboard.KeyC2R0), int(keyboard.KeyC3R0),
 	}
-	// TinyGoでヒープ再確保を避けるためパッケージレベルで確保
-	metricsBuf [KeyCount]uint32
 )
 
-func RenderMetrics(ws *driver.WS2812B, matrix int, cpuPct, memPct float32) {
-	colors := metricsBuf[:matrix]
+func RenderMetrics(ws *driver.WS2812B, cpuPct, memPct float32) {
+	colors := buf[:]
 	for i := range colors {
 		colors[i] = 0
 	}

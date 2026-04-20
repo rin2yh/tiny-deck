@@ -1,18 +1,18 @@
-package keyboard
+package encoder
 
 import "machine/usb/hid/keyboard"
 
-func DispatchVolume(cmd EncoderCommand) {
-	if cmd == EncoderNone {
+func DispatchVolume(cmd Command) {
+	if cmd == None {
 		return
 	}
 	kb := keyboard.Port()
 	switch cmd {
-	case EncoderVolumeUp:
+	case VolumeUp:
 		kb.Press(keyboard.KeyMediaVolumeInc)
-	case EncoderVolumeDown:
+	case VolumeDown:
 		kb.Press(keyboard.KeyMediaVolumeDec)
-	case EncoderMute:
+	case Mute:
 		kb.Press(keyboard.KeyMediaMute)
 	}
 }

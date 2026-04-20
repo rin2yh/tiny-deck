@@ -8,6 +8,9 @@ import (
 	"github.com/rin2yh/tiny-deck/internal/driver"
 	"github.com/rin2yh/tiny-deck/internal/joystick"
 	"github.com/rin2yh/tiny-deck/internal/keyboard"
+	"github.com/rin2yh/tiny-deck/internal/keyboard/encoder"
+	"github.com/rin2yh/tiny-deck/internal/keyboard/layer"
+	"github.com/rin2yh/tiny-deck/internal/keyboard/led"
 )
 
 func main() {
@@ -16,15 +19,15 @@ func main() {
 
 	ws := driver.NewWS2812B(machine.GPIO1)
 	scanner := keyboard.Setup()
-	keyboard.StartupAnimation(ws, scanner)
+	led.StartupAnimation(ws)
 
-	layers := keyboard.NewLayerState()
+	layers := layer.New()
 	layerKey := keyboard.NewLongPressDetector(int(keyboard.KeyC3R2), 1000*time.Millisecond)
 
 	serial := machine.Serial
 	serial.Configure(machine.UARTConfig{})
 
-	enc := keyboard.NewEncoder(machine.GPIO3, machine.GPIO4, machine.GPIO2)
+	enc := encoder.New(machine.GPIO3, machine.GPIO4, machine.GPIO2)
 	js := joystick.NewJoystick(false, true)
 	dp := display.New(disp, func() string { return layers.Current().String() })
 
@@ -32,18 +35,18 @@ func main() {
 		if layerKey.Update(scanner.Scan()) {
 			layers.Toggle()
 		}
-		handleDisplayCommand(dp.Update(serial), ws, scanner, &dp)
-		keyboard.DispatchVolume(enc.Update())
+		handleDisplayCommand(dp.Update(serial), ws, &dp)
+		encoder.DispatchVolume(enc.Update())
 		joystick.DispatchMouse(js.Update())
 		time.Sleep(10 * time.Millisecond)
 	}
 }
 
-func handleDisplayCommand(cmd display.Command, ws *driver.WS2812B, scanner *keyboard.Scanner, dp *display.Display) {
+func handleDisplayCommand(cmd display.Command, ws *driver.WS2812B, dp *display.Display) {
 	switch cmd {
 	case display.CommandNotify:
-		keyboard.NotificationAnimation(ws, scanner.KeyCount())
+		led.NotificationAnimation(ws)
 	case display.CommandMetricsChanged:
-		keyboard.RenderMetrics(ws, scanner.KeyCount(), dp.CPUPercent(), dp.MemPercent())
+		led.RenderMetrics(ws, dp.CPUPercent(), dp.MemPercent())
 	}
 }
