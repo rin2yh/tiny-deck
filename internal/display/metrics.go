@@ -5,10 +5,12 @@ import (
 	"machine"
 	"strconv"
 	"strings"
+	"time"
 
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
 	"tinygo.org/x/tinyfont/freemono"
+	"tinygo.org/x/tinyfont/gophers"
 	"tinygo.org/x/tinyfont/proggy"
 )
 
@@ -71,6 +73,22 @@ const (
 	prefixMem = "mem:"
 )
 
+const (
+	gopherBaseX    = 104
+	gopherBaseY    = 28
+	gopherInterval = 220 * time.Millisecond
+)
+
+// 全身がちゃんと映る 32pt glyph のみ採用（目だけ／部分表示になる低背 glyph は除外）
+var gopherPoses = [...]string{"A", "B", "W", "Y"}
+
+var gopherOffsets = [4]struct{ dx, dy int16 }{
+	{dx: +2, dy: 0},
+	{dx: -2, dy: 0},
+	{dx: +2, dy: -1},
+	{dx: -2, dy: -1},
+}
+
 type Metrics struct {
 	display        *ssd1306.Device
 	reader         serialReader
@@ -81,6 +99,8 @@ type Metrics struct {
 	lastMem        string
 	lastCPUVal     float32
 	lastMemVal     float32
+	gopherPhase    uint8
+	lastGopherAt   time.Time
 }
 
 func (m *Metrics) CPUPercent() float32 { return m.lastCPUVal }
@@ -98,7 +118,16 @@ func parsePercent(line, prefix string) (float32, bool) {
 }
 
 func NewMetrics(d *ssd1306.Device, layerName func() string) Metrics {
-	return Metrics{display: d, layerName: layerName}
+	return Metrics{display: d, layerName: layerName, lastGopherAt: time.Now()}
+}
+
+func (m *Metrics) tickGopher(now time.Time) bool {
+	if now.Sub(m.lastGopherAt) < gopherInterval {
+		return false
+	}
+	m.gopherPhase++
+	m.lastGopherAt = now
+	return true
 }
 
 func (m *Metrics) drawMetrics() {
@@ -106,10 +135,14 @@ func (m *Metrics) drawMetrics() {
 	tinyfont.WriteLine(m.display, &proggy.TinySZ8pt7b, 4, 8, m.lastLayerLabel, white)
 	tinyfont.WriteLine(m.display, &freemono.Regular9pt7b, 4, 40, m.lastCPU, white)
 	tinyfont.WriteLine(m.display, &freemono.Regular9pt7b, 4, 58, m.lastMem, white)
+	phase := m.gopherPhase & 0x03
+	off := gopherOffsets[phase]
+	tinyfont.WriteLine(m.display, &gophers.Regular32pt, gopherBaseX+off.dx, gopherBaseY+off.dy, gopherPoses[phase], white)
 	m.display.Display()
 }
 
 func (m *Metrics) Update(serial machine.Serialer) Command {
+	gopherTicked := m.tickGopher(time.Now())
 	currentLayer := m.layerName()
 	layerChanged := currentLayer != m.lastLayer
 	metricsChanged := false
@@ -144,7 +177,7 @@ func (m *Metrics) Update(serial machine.Serialer) Command {
 		m.lastLayerLabel = "[" + currentLayer + "]"
 	}
 
-	if !metricsChanged && !layerChanged {
+	if !metricsChanged && !layerChanged && !gopherTicked {
 		return CommandNone
 	}
 
