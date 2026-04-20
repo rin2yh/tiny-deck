@@ -47,17 +47,17 @@ func main() {
 	kb := keyboardpkg.Port()
 	js := joystick.NewJoystick(false, true)
 
-	m := display.NewMetrics(disp, func() string { return layers.Current().String() })
+	dp := display.New(disp, func() string { return layers.Current().String() })
 	for {
 		if layerKey.Update(scanner.Scan()) {
 			layers.Toggle()
 		}
-		cmd := m.Update(serial)
+		cmd := dp.Update(serial)
 		switch cmd {
 		case display.CommandNotify:
 			keyboard.NotificationAnimation(ws, scanner.KeyCount())
 		case display.CommandMetricsChanged:
-			keyboard.RenderMetrics(ws, scanner.KeyCount(), m.CPUPercent(), m.MemPercent())
+			keyboard.RenderMetrics(ws, scanner.KeyCount(), dp.CPUPercent(), dp.MemPercent())
 		}
 		switch enc.Update() {
 		case keyboard.EncoderVolumeUp:
