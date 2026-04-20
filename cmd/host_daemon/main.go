@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -46,7 +48,7 @@ func main() {
 
 	var mu sync.Mutex
 	go watchNotifications(sp, &mu)
-	go watchVolumeCommands(sp)
+	go watchVolumeCommands(sp, &mu)
 
 	for {
 		v, err := cpu.Percent(interval, false)
@@ -130,26 +132,68 @@ func watchNotifications(sp serial.Port, mu *sync.Mutex) {
 	}
 }
 
-func watchVolumeCommands(sp serial.Port) {
+func watchVolumeCommands(sp serial.Port, mu *sync.Mutex) {
 	scanner := bufio.NewScanner(sp)
 	for scanner.Scan() {
 		line := scanner.Text()
-		var script string
+		var setExpr string
 		switch line {
 		case volume.CmdUp:
-			script = "set volume output volume (output volume of (get volume settings) + 5)"
+			setExpr = "set volume output volume ((output volume of (get volume settings)) + 5)"
 		case volume.CmdDown:
-			script = "set volume output volume (output volume of (get volume settings) - 5)"
+			setExpr = "set volume output volume ((output volume of (get volume settings)) - 5)"
 		case volume.CmdMute:
-			script = "set volume output muted not (output muted of (get volume settings))"
+			setExpr = "set volume output muted (not (output muted of (get volume settings)))"
+		default:
+			continue
 		}
-		if script != "" {
-			if out, err := exec.Command("osascript", "-e", script).CombinedOutput(); err != nil {
-				log.Printf("[vol] osascript error: %v, output: %s", err, out)
-			}
+		out, err := exec.Command(
+			"osascript",
+			"-e", setExpr,
+			"-e", "set s to (get volume settings)",
+			"-e", "((output volume of s) as text) & \",\" & ((output muted of s) as text)",
+		).Output()
+		if err != nil {
+			log.Printf("[vol] osascript error: %v (out=%q)", err, string(out))
+			continue
+		}
+		vol, muted, ok := parseVolumeReply(string(out))
+		if !ok {
+			log.Printf("[vol] unexpected osascript output: %q", string(out))
+			continue
+		}
+		mutedInt := 0
+		if muted {
+			mutedInt = 1
+		}
+		reply := fmt.Sprintf("%s%d\n%s%d\n", volume.PrefixCurrent, vol, volume.PrefixMuted, mutedInt)
+		mu.Lock()
+		_, werr := sp.Write([]byte(reply))
+		mu.Unlock()
+		if werr != nil {
+			log.Printf("[vol] serial write failed: %v", werr)
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		log.Printf("volume command scanner error: %v", err)
 	}
+}
+
+func parseVolumeReply(s string) (int, bool, bool) {
+	s = strings.TrimSpace(s)
+	parts := strings.Split(s, ",")
+	if len(parts) != 2 {
+		return 0, false, false
+	}
+	v, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+	if err != nil {
+		return 0, false, false
+	}
+	if v < 0 {
+		v = 0
+	} else if v > 100 {
+		v = 100
+	}
+	muted := strings.TrimSpace(parts[1]) == "true"
+	return v, muted, true
 }

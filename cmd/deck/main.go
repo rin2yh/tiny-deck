@@ -68,10 +68,13 @@ func main() {
 		switch enc.Update() {
 		case keyboard.EncoderVolumeUp:
 			serial.Write(serialVolUp)
+			m.ShowVolumePending(display.VolPendingUp)
 		case keyboard.EncoderVolumeDown:
 			serial.Write(serialVolDown)
+			m.ShowVolumePending(display.VolPendingDown)
 		case keyboard.EncoderMute:
 			serial.Write(serialMute)
+			m.ShowVolumePending(display.VolPendingMute)
 		}
 		ev := js.Update()
 		if ev.DX != 0 || ev.DY != 0 {
