@@ -7,7 +7,12 @@ import (
 	"github.com/rin2yh/tiny-deck/internal/driver"
 )
 
-var outerKeys = []int{0, 1, 2, 3, 4, 7, 8, 9, 10, 11}
+var outerKeys = []int{
+	int(KeyC0R0), int(KeyC0R1), int(KeyC0R2),
+	int(KeyC1R0), int(KeyC1R1),
+	int(KeyC2R1), int(KeyC2R2),
+	int(KeyC3R0), int(KeyC3R1), int(KeyC3R2),
+}
 
 func NotificationAnimation(ws *driver.WS2812B, matrix int) {
 	colors := make([]uint32, matrix)

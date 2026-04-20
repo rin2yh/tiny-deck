@@ -6,10 +6,20 @@ import (
 )
 
 var (
-	cpuBarOrder = []int{2, 5, 1, 4, 0, 3}
-	memBarOrder = []int{8, 11, 7, 10, 6, 9}
+	// Left 2 columns, bottom-to-top
+	cpuBarOrder = []int{
+		int(KeyC0R2), int(KeyC1R2),
+		int(KeyC0R1), int(KeyC1R1),
+		int(KeyC0R0), int(KeyC1R0),
+	}
+	// Right 2 columns, bottom-to-top
+	memBarOrder = []int{
+		int(KeyC2R2), int(KeyC3R2),
+		int(KeyC2R1), int(KeyC3R1),
+		int(KeyC2R0), int(KeyC3R0),
+	}
 	// TinyGoでヒープ再確保を避けるためパッケージレベルで確保
-	metricsBuf [12]uint32
+	metricsBuf [KeyCount]uint32
 )
 
 func RenderMetrics(ws *driver.WS2812B, matrix int, cpuPct, memPct float32) {

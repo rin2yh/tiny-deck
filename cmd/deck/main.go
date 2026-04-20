@@ -43,7 +43,7 @@ func main() {
 	keyboard.StartupAnimation(ws, scanner)
 
 	layers := keyboard.NewLayerState()
-	layerKey := keyboard.NewLongPressDetector(11, 1000*time.Millisecond)
+	layerKey := keyboard.NewLongPressDetector(int(keyboard.KeyC3R2), 1000*time.Millisecond)
 
 	// USB Serial
 	serial := machine.Serial

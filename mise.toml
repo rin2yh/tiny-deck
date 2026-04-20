@@ -12,7 +12,7 @@ run = "launchctl kill SIGTERM gui/$(id -u)/com.github.rin2yh.tiny-deck 2>/dev/nu
 run = "launchctl kickstart -k gui/$(id -u)/com.github.rin2yh.tiny-deck"
 
 [tasks.flash]
-depends = ["stop-host"]
+# depends = ["stop-host"]
 run = "tinygo flash --target waveshare-rp2040-zero --size short ./cmd/deck"
 
 [tasks.host]
