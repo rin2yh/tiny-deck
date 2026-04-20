@@ -2,6 +2,7 @@ package main
 
 import (
 	"machine"
+	keyboardpkg "machine/usb/hid/keyboard"
 	"machine/usb/hid/mouse"
 	"time"
 
@@ -9,15 +10,7 @@ import (
 	"github.com/rin2yh/tiny-deck/internal/driver"
 	"github.com/rin2yh/tiny-deck/internal/joystick"
 	"github.com/rin2yh/tiny-deck/internal/keyboard"
-	"github.com/rin2yh/tiny-deck/internal/volume"
 	"tinygo.org/x/drivers/ssd1306"
-)
-
-// TinyGoでヒープ再確保を避けるためパッケージレベルで確保
-var (
-	serialVolUp   = []byte(volume.CmdUp + "\n")
-	serialVolDown = []byte(volume.CmdDown + "\n")
-	serialMute    = []byte(volume.CmdMute + "\n")
 )
 
 func main() {
@@ -51,6 +44,7 @@ func main() {
 
 	enc := keyboard.NewEncoder(machine.GPIO3, machine.GPIO4, machine.GPIO2)
 	ms := mouse.Port()
+	kb := keyboardpkg.Port()
 	js := joystick.NewJoystick(false, true)
 
 	m := display.NewMetrics(disp, func() string { return layers.Current().String() })
@@ -67,14 +61,11 @@ func main() {
 		}
 		switch enc.Update() {
 		case keyboard.EncoderVolumeUp:
-			serial.Write(serialVolUp)
-			m.ShowVolumePending(display.VolPendingUp)
+			kb.Press(keyboardpkg.KeyMediaVolumeInc)
 		case keyboard.EncoderVolumeDown:
-			serial.Write(serialVolDown)
-			m.ShowVolumePending(display.VolPendingDown)
+			kb.Press(keyboardpkg.KeyMediaVolumeDec)
 		case keyboard.EncoderMute:
-			serial.Write(serialMute)
-			m.ShowVolumePending(display.VolPendingMute)
+			kb.Press(keyboardpkg.KeyMediaMute)
 		}
 		ev := js.Update()
 		if ev.DX != 0 || ev.DY != 0 {
