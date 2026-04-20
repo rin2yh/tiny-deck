@@ -5,7 +5,14 @@ go = "1.25.0"
 [settings]
 go.set_goroot = false
 
+[tasks.stop-host]
+run = "launchctl kill SIGTERM gui/$(id -u)/com.github.rin2yh.tiny-deck 2>/dev/null; true"
+
+[tasks.start-host]
+run = "launchctl kickstart -k gui/$(id -u)/com.github.rin2yh.tiny-deck"
+
 [tasks.flash]
+depends = ["stop-host"]
 run = "tinygo flash --target waveshare-rp2040-zero --size short ./cmd/deck"
 
 [tasks.host]
