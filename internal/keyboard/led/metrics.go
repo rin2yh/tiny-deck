@@ -31,6 +31,14 @@ func RenderMetrics(ws *driver.WS2812B, cpuPct, memPct float32) {
 	ws.WriteRaw(colors)
 }
 
+func ClearMetrics(ws *driver.WS2812B) {
+	colors := buf[:]
+	for i := range colors {
+		colors[i] = 0
+	}
+	ws.WriteRaw(colors)
+}
+
 func paintBar(ws *driver.WS2812B, colors []uint32, order []int, pct float32) {
 	if pct < 0 {
 		pct = 0

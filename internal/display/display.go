@@ -20,6 +20,7 @@ const (
 	CommandNone Command = iota
 	CommandNotify
 	CommandMetricsChanged
+	CommandMetricsStale
 )
 
 type Display struct {
@@ -30,6 +31,7 @@ type Display struct {
 	layerName      func() string
 	lastLayer      string
 	lastLayerLabel string
+	lastStale      bool
 }
 
 func New(oled *ssd1306.Device, layerName func() string) Display {
@@ -40,7 +42,8 @@ func (d *Display) CPUPercent() float32 { return d.metrics.cpu }
 func (d *Display) MemPercent() float32 { return d.metrics.mem }
 
 func (d *Display) Update(s machine.Serialer) Command {
-	gopherTicked := d.gopher.tick(time.Now())
+	now := time.Now()
+	gopherTicked := d.gopher.tick(now)
 	currentLayer := d.layerName()
 	layerChanged := currentLayer != d.lastLayer
 	metricsChanged := false
@@ -51,7 +54,7 @@ func (d *Display) Update(s machine.Serialer) Command {
 			return CommandNotify
 		}
 		if strings.HasPrefix(l, prefixCPU) || strings.HasPrefix(l, prefixMem) {
-			if d.metrics.tryUpdate(l) {
+			if d.metrics.tryUpdate(l, now) {
 				metricsChanged = true
 			}
 		}
@@ -62,21 +65,28 @@ func (d *Display) Update(s machine.Serialer) Command {
 		d.lastLayerLabel = "[" + currentLayer + "]"
 	}
 
-	if !metricsChanged && !layerChanged && !gopherTicked {
+	stale := d.metrics.isStale(now)
+	staleChanged := stale != d.lastStale
+
+	if !metricsChanged && !layerChanged && !gopherTicked && !staleChanged {
 		return CommandNone
 	}
 
-	d.draw()
+	d.lastStale = stale
+	d.draw(stale)
+	if staleChanged && stale {
+		return CommandMetricsStale
+	}
 	if metricsChanged {
 		return CommandMetricsChanged
 	}
 	return CommandNone
 }
 
-func (d *Display) draw() {
+func (d *Display) draw(stale bool) {
 	d.oled.ClearBuffer()
 	tinyfont.WriteLine(d.oled, &proggy.TinySZ8pt7b, 4, 8, d.lastLayerLabel, white)
-	d.metrics.draw(d.oled)
+	d.metrics.draw(d.oled, stale)
 	d.gopher.draw(d.oled)
 	d.oled.Display()
 }

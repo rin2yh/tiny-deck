@@ -3,6 +3,7 @@ package display
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
@@ -10,8 +11,9 @@ import (
 )
 
 const (
-	prefixCPU = "cpu:"
-	prefixMem = "mem:"
+	prefixCPU      = "cpu:"
+	prefixMem      = "mem:"
+	metricsTimeout = 5 * time.Second
 )
 
 type metricsState struct {
@@ -19,6 +21,8 @@ type metricsState struct {
 	lastMemLine string
 	cpu         float32
 	mem         float32
+	lastAt      time.Time
+	hasData     bool
 }
 
 func parsePercent(line, prefix string) (float32, bool) {
@@ -32,7 +36,7 @@ func parsePercent(line, prefix string) (float32, bool) {
 	return float32(v), true
 }
 
-func (m *metricsState) tryUpdate(line string) bool {
+func (m *metricsState) tryUpdate(line string, now time.Time) bool {
 	switch {
 	case strings.HasPrefix(line, prefixCPU):
 		if line == m.lastCPULine {
@@ -41,6 +45,8 @@ func (m *metricsState) tryUpdate(line string) bool {
 		m.lastCPULine = line
 		if v, ok := parsePercent(line, prefixCPU); ok {
 			m.cpu = v
+			m.lastAt = now
+			m.hasData = true
 			return true
 		}
 	case strings.HasPrefix(line, prefixMem):
@@ -50,13 +56,25 @@ func (m *metricsState) tryUpdate(line string) bool {
 		m.lastMemLine = line
 		if v, ok := parsePercent(line, prefixMem); ok {
 			m.mem = v
+			m.lastAt = now
+			m.hasData = true
 			return true
 		}
 	}
 	return false
 }
 
-func (m *metricsState) draw(d *ssd1306.Device) {
+func (m *metricsState) isStale(now time.Time) bool {
+	if !m.hasData {
+		return true
+	}
+	return now.Sub(m.lastAt) >= metricsTimeout
+}
+
+func (m *metricsState) draw(d *ssd1306.Device, stale bool) {
+	if stale {
+		return
+	}
 	tinyfont.WriteLine(d, &freemono.Regular9pt7b, 4, 40, m.lastCPULine, white)
 	tinyfont.WriteLine(d, &freemono.Regular9pt7b, 4, 58, m.lastMemLine, white)
 }

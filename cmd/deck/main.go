@@ -48,5 +48,7 @@ func handleDisplayCommand(cmd display.Command, ws *driver.WS2812B, dp *display.D
 		led.NotificationAnimation(ws)
 	case display.CommandMetricsChanged:
 		led.RenderMetrics(ws, dp.CPUPercent(), dp.MemPercent())
+	case display.CommandMetricsStale:
+		led.ClearMetrics(ws)
 	}
 }
