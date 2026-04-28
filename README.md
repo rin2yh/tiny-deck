@@ -9,7 +9,7 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 - [CPU・メモリ使用率をOLEDに表示する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/display/metrics.go)
 - [使用率に応じてLEDマトリクスにバー表示する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/metrics.go)
 - [ロータリーエンコーダーで音量を調節する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/encoder.go)
-- [joystickでマウスカーソルを動かす](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/joystick/joystick.go)
+- [joystickでマウスホイールスクロール（押下中はゆっくり下スクロール）](https://github.com/rin2yh/tiny-deck/blob/main/internal/joystick/scroll.go)
 - [キー入力・長押しでレイヤーを切り替える](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/layer.go)
 - [macOSの通知を検知してLEDを光らせる](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/animation.go)
 - [USB接続で`host_daemon`を自動起動する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/scripts/install.sh)
