@@ -8,20 +8,17 @@ const (
 )
 
 type Scroller struct {
-	accumY    int
-	pressed   bool
-	holdTicks int
+	accumY     int
+	autoScroll bool
+	autoTicks  int
 }
 
 func NewScroller() *Scroller { return &Scroller{} }
 
 func (s *Scroller) Dispatch(ev Event) {
 	if ev.Click {
-		s.pressed = true
-		s.holdTicks = 0
-	}
-	if ev.Release {
-		s.pressed = false
+		s.autoScroll = !s.autoScroll
+		s.autoTicks = 0
 	}
 
 	ms := mouse.Port()
@@ -40,10 +37,10 @@ func (s *Scroller) Dispatch(ev Event) {
 	}
 	s.accumY = 0
 
-	if s.pressed {
-		s.holdTicks++
-		if s.holdTicks >= autoScrollPeriodTicks {
-			s.holdTicks = 0
+	if s.autoScroll {
+		s.autoTicks++
+		if s.autoTicks >= autoScrollPeriodTicks {
+			s.autoTicks = 0
 			ms.WheelDown()
 		}
 	}
