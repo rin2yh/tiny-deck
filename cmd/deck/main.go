@@ -29,6 +29,7 @@ func main() {
 
 	enc := encoder.New(machine.GPIO3, machine.GPIO4, machine.GPIO2)
 	js := joystick.NewJoystick(false, true)
+	scroller := joystick.NewScroller()
 	dp := display.New(disp, func() string { return layers.Current().String() })
 
 	for {
@@ -37,7 +38,7 @@ func main() {
 		}
 		handleDisplayCommand(dp.Update(serial), ws, &dp)
 		encoder.DispatchVolume(enc.Update())
-		joystick.DispatchMouse(js.Update())
+		scroller.Dispatch(js.Update())
 		time.Sleep(10 * time.Millisecond)
 	}
 }
