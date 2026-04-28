@@ -29,14 +29,9 @@ func (s *Scroller) Dispatch(ev Event) {
 
 	if ev.DY != 0 {
 		s.accumY += ev.DY
-		for s.accumY >= scrollTiltThreshold {
-			ms.WheelDown()
-			s.accumY -= scrollTiltThreshold
-		}
-		for s.accumY <= -scrollTiltThreshold {
-			ms.WheelUp()
-			s.accumY += scrollTiltThreshold
-		}
+		notches := s.accumY / scrollTiltThreshold
+		s.accumY -= notches * scrollTiltThreshold
+		ms.Wheel(-notches)
 		return
 	}
 	s.accumY = 0
