@@ -23,6 +23,10 @@ func (s *Scroller) Dispatch(ev Event) {
 
 	ms := mouse.Port()
 
+	if ev.DX != 0 || ev.DY != 0 {
+		s.autoScroll = false
+	}
+
 	if ev.DY != 0 {
 		s.accumY += ev.DY
 		for s.accumY >= scrollTiltThreshold {
