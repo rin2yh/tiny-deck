@@ -21,8 +21,6 @@ func (s *Scroller) Dispatch(ev Event) {
 		s.autoTicks = 0
 	}
 
-	ms := mouse.Port()
-
 	if ev.DX != 0 || ev.DY != 0 {
 		s.autoScroll = false
 	}
@@ -31,7 +29,7 @@ func (s *Scroller) Dispatch(ev Event) {
 		s.accumY += ev.DY
 		notches := s.accumY / scrollTiltThreshold
 		s.accumY -= notches * scrollTiltThreshold
-		ms.Wheel(-notches)
+		mouse.Port().Wheel(-notches)
 		return
 	}
 	s.accumY = 0
@@ -40,7 +38,7 @@ func (s *Scroller) Dispatch(ev Event) {
 		s.autoTicks++
 		if s.autoTicks >= autoScrollPeriodTicks {
 			s.autoTicks = 0
-			ms.WheelDown()
+			mouse.Port().WheelDown()
 		}
 	}
 }
