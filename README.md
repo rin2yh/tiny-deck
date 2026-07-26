@@ -13,9 +13,28 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 - [キー入力・長押しでレイヤーを切り替える](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/layer.go)
 - [macOSの通知を検知してLEDを光らせる](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/animation.go)
 - [USB接続で`host_daemon`を自動起動する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/scripts/install.sh)
+- [Gameレイヤーで選んだゲームをOLEDで遊ぶ](internal/arcade/launcher.go)
 
 ## 展望
 - 10キーにする
+
+## Gameレイヤー
+
+レイヤーキー（`KeyC3R2`）の長押しは `NumPad → Temp → Game → NumPad` と巡回する。
+`Game` に入るとゲーム選択画面になり、OLEDはゲームが占有する。
+
+| 場面 | 操作 |
+| --- | --- |
+| 選択画面 | エンコーダー回転でカーソル移動、押し込みで開始 |
+| プレイ中 | レイヤーキー以外のどのキーでもジャンプ、エンコーダー押し込みで終了して選択画面へ |
+| どちらでも | レイヤーキーの長押しで `NumPad` に戻る |
+
+`Game` レイヤーの間は音量調節・マウス操作・LEDの使用率表示を止める。
+ゲーム本体は [rin2yh/dinosaur-game](https://github.com/rin2yh/dinosaur-game) の
+`game` パッケージをそのまま使っていて、`internal/arcade` は選択画面と
+ssd1306 への描画だけを持つ。追加するゲームが 128x64 の 1bit 画面に
+`SetPixel` で描き、`Update(pressed bool)` で 1 フレーム進む形なら
+`internal/arcade/arcade.go` の `entries` に足すだけで選択画面に並ぶ。
 
 ## セットアップ
 

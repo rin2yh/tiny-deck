@@ -5,6 +5,9 @@ type Layer int
 const (
 	NumPad Layer = iota // 初期状態（デフォルト）
 	Temp
+	Game // ゲーム選択画面
+
+	layerCount
 )
 
 func (l Layer) String() string {
@@ -13,6 +16,8 @@ func (l Layer) String() string {
 		return "NumPad"
 	case Temp:
 		return "Temp"
+	case Game:
+		return "Game"
 	default:
 		return "Unknown"
 	}
@@ -30,10 +35,7 @@ func (s *State) Current() Layer {
 	return s.current
 }
 
-func (s *State) Toggle() {
-	if s.current == NumPad {
-		s.current = Temp
-	} else {
-		s.current = NumPad
-	}
+// Next は NumPad → Temp → Game → NumPad と巡回する。
+func (s *State) Next() {
+	s.current = (s.current + 1) % layerCount
 }

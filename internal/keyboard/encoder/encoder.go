@@ -6,14 +6,12 @@ import (
 	"tinygo.org/x/drivers/encoders"
 )
 
-type Command uint8
-
-const (
-	None Command = iota
-	VolumeUp
-	VolumeDown
-	Mute
-)
+// Event は 1 回のポーリングで観測した操作。用途を決めるのは呼び出し側で、
+// 通常レイヤーでは音量、ゲームレイヤーではメニュー操作に割り当てる。
+type Event struct {
+	Delta   int  // ノッチ単位の回転量（時計回りが正）
+	Pressed bool // 押し込みの押下エッジ
+}
 
 type Encoder struct {
 	enc     *encoders.QuadratureDevice
@@ -30,27 +28,19 @@ func New(pinA, pinB, pinSW machine.Pin) *Encoder {
 	return &Encoder{enc: enc, swPin: pinSW}
 }
 
-func (e *Encoder) Update() Command {
+func (e *Encoder) Update() Event {
+	var ev Event
+
 	// PullUp接続のため反転
 	pressed := !e.swPin.Get()
-	if pressed && !e.swLast {
-		e.swLast = true
-		return Mute
-	}
-	if !pressed {
-		e.swLast = false
-	}
+	ev.Pressed = pressed && !e.swLast
+	e.swLast = pressed
 
 	// Position()はrawValue/Precisionを返すため1ノッチ=delta1
 	pos := e.enc.Position()
-	delta := pos - e.lastPos
-	if delta >= 1 {
+	if pos != e.lastPos {
+		ev.Delta = pos - e.lastPos
 		e.lastPos = pos
-		return VolumeUp
 	}
-	if delta <= -1 {
-		e.lastPos = pos
-		return VolumeDown
-	}
-	return None
+	return ev
 }
