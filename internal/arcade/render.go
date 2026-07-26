@@ -20,8 +20,9 @@ const (
 
 	// ゲームオーバー画面は y=20 の GAME OVER と y=32 の PRESS JUMP、
 	// y=56 の地面が埋まっているので、その隙間に戻る導線を置く。
+	// どのボタンかは選択画面の ENC:SELECT/START と同じ書き方で示す。
 	exitHintY    = 48
-	exitHintText = "PUSH:MENU"
+	exitHintText = "ENC:MENU"
 )
 
 // oledDisplay はゲームの点灯要求を ssd1306 のバッファへ転送する。
@@ -39,7 +40,7 @@ func (l *Launcher) drawMenu() {
 		}
 		tinyfont.WriteLine(l.oled, &proggy.TinySZ8pt7b, menuLabelX, y, e.Name, white)
 	}
-	l.drawCentered("ENC:SELECT/START", menuHintY)
+	l.drawCentered(&proggy.TinySZ8pt7b, "ENC:SELECT/START", menuHintY)
 	l.oled.Display()
 }
 
@@ -47,16 +48,17 @@ func (l *Launcher) drawGame() {
 	l.oled.ClearBuffer()
 	l.current.Draw(oledDisplay{l.oled})
 	if l.current.Over() {
-		l.drawCentered(exitHintText, exitHintY)
+		// ゲーム画面の文字（3x5）に合わせて同じ背丈の TomThumb で描く
+		l.drawCentered(&tinyfont.TomThumb, exitHintText, exitHintY)
 	}
 	l.setNight(l.current.Night())
 	l.oled.Display()
 }
 
-func (l *Launcher) drawCentered(s string, y int16) {
-	_, w := tinyfont.LineWidth(&proggy.TinySZ8pt7b, s)
+func (l *Launcher) drawCentered(f tinyfont.Fonter, s string, y int16) {
+	_, w := tinyfont.LineWidth(f, s)
 	width, _ := l.oled.Size()
-	tinyfont.WriteLine(l.oled, &proggy.TinySZ8pt7b, (width-int16(w))/2, y, s, white)
+	tinyfont.WriteLine(l.oled, f, (width-int16(w))/2, y, s, white)
 }
 
 // setNight はナイトモードを SSD1306 の表示反転コマンドで表現する。
