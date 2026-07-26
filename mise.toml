@@ -1,6 +1,6 @@
 [tools]
 "aqua:tinygo-org/tinygo" = "latest"
-go = "1.25.0"
+go = "1.25.6"
 
 [settings]
 go.set_goroot = false

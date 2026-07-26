@@ -41,7 +41,10 @@ func New(oled *ssd1306.Device, layerName func() string) Display {
 func (d *Display) CPUPercent() float32 { return d.metrics.cpu }
 func (d *Display) MemPercent() float32 { return d.metrics.mem }
 
-func (d *Display) Update(s machine.Serialer) Command {
+// Update はホストからの行を取り込み、必要なら OLED を描き直す。
+// draw が false のときは描画だけを止める。OLED をゲームに明け渡している間も
+// シリアルを詰まらせず、指標を最新に保つために使う。
+func (d *Display) Update(s machine.Serialer, draw bool) Command {
 	now := time.Now()
 	gopherTicked := d.gopher.tick(now)
 	currentLayer := d.layerName()
@@ -73,7 +76,9 @@ func (d *Display) Update(s machine.Serialer) Command {
 	}
 
 	d.lastStale = stale
-	d.draw(stale)
+	if draw {
+		d.draw(stale)
+	}
 	if staleChanged && stale {
 		return CommandMetricsStale
 	}
