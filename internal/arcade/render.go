@@ -1,6 +1,7 @@
 package arcade
 
 import (
+	"bytes"
 	"image/color"
 
 	"tinygo.org/x/drivers/ssd1306"
@@ -18,11 +19,12 @@ const (
 	menuLabelX  = 18
 	menuHintY   = 62
 
-	// ゲームオーバー画面は y=20 の GAME OVER と y=32 の PRESS JUMP、
-	// y=56 の地面が埋まっているので、その隙間に戻る導線を置く。
 	// どのボタンかは選択画面の ENC:SELECT/START と同じ書き方で示す。
-	exitHintY    = 48
+	// 重ねる位置はゲームごとに違うので Entry.HintY が持つ。
 	exitHintText = "ENC:MENU"
+
+	// SSD1306 の 128x64 は 1 ページ 8 行なのでフレームバッファは 1KB。
+	frameBufferSize = 128 * 64 / 8
 )
 
 // oledDisplay はゲームの点灯要求を ssd1306 のバッファへ転送する。
@@ -41,7 +43,7 @@ func (l *Launcher) drawMenu() {
 		tinyfont.WriteLine(l.oled, &proggy.TinySZ8pt7b, menuLabelX, y, e.Name, white)
 	}
 	l.drawCentered(&proggy.TinySZ8pt7b, "ENC:SELECT/START", menuHintY)
-	l.oled.Display()
+	l.flush()
 }
 
 func (l *Launcher) drawGame() {
@@ -49,9 +51,22 @@ func (l *Launcher) drawGame() {
 	l.current.Draw(oledDisplay{l.oled})
 	if l.current.Over() {
 		// ゲーム画面の文字（3x5）に合わせて同じ背丈の TomThumb で描く
-		l.drawCentered(&tinyfont.TomThumb, exitHintText, exitHintY)
+		l.drawCentered(&tinyfont.TomThumb, exitHintText, entries[l.cursor].HintY)
 	}
 	l.setNight(l.current.Night())
+	l.flush()
+}
+
+// flush は前回転送した内容と変わっていなければ I2C 転送を省く。
+// 全画面転送は 20ms 強かかるのに対し 1KB の比較は桁違いに安く、
+// タイトルとゲームオーバーは点滅以外静止しているので効きが大きい。
+func (l *Launcher) flush() {
+	buf := l.oled.GetBuffer()
+	if l.sent && bytes.Equal(buf, l.sentBuf[:]) {
+		return
+	}
+	copy(l.sentBuf[:], buf)
+	l.sent = true
 	l.oled.Display()
 }
 

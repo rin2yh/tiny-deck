@@ -26,10 +26,15 @@ type Game interface {
 type Entry struct {
 	Name string
 	New  func(seed uint32) Game
+	// HintY はゲームオーバー時に戻る導線を重ねる y 座標。画面のどこが
+	// 空いているかはゲームごとに違うので、ゲーム側の都合をここに置く。
+	HintY int16
 }
 
 var entries = []Entry{
-	{Name: "DINOSAUR", New: func(seed uint32) Game { return dinosaur{game.New(seed)} }},
+	// ディノのゲームオーバー画面は y=20 の GAME OVER と y=32 の PRESS JUMP、
+	// y=56 の地面が埋まっているので、その隙間に導線を置く。
+	{Name: "DINOSAUR", New: func(seed uint32) Game { return dinosaur{game.New(seed)} }, HintY: 48},
 }
 
 // dinosaur は game.Game に Over を足すだけのアダプタ。ゲーム側の Mode 型を

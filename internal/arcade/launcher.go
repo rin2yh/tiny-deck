@@ -34,6 +34,10 @@ type Launcher struct {
 	night     bool
 	menuDirty bool
 
+	// 直前に OLED へ送った内容。同じ絵を送り直さないための控え。
+	sentBuf [frameBufferSize]byte
+	sent    bool
+
 	// ボードに時計が無く毎回同じ状態で起動するため、乱数シードは
 	// 選択画面に留まったループ回数（＝プレイヤーの操作タイミング）で作る
 	ticks uint32
@@ -50,6 +54,8 @@ func (l *Launcher) Enter() {
 	l.menuDirty = true
 	l.jumpLatch = false
 	l.keyHeld = false
+	// 通常レイヤーが同じ OLED を直接描いているので、控えは当てにできない
+	l.sent = false
 	l.setNight(false)
 }
 

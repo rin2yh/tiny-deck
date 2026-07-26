@@ -52,11 +52,12 @@ func main() {
 
 		ev := enc.Update()
 		if layers.Current() == layer.Game {
-			// ゲームが OLED を占有する間は音量・スクロール・LED を止める
-			dp.Drain(serial)
+			// ゲームが OLED を占有する間は音量・スクロール・LED を止める。
+			// 指標だけは取り込んで、戻ったときに最新の値が出るようにする。
+			dp.Update(serial, false)
 			games.Update(jumpPressed(keys), ev.Delta, ev.Pressed)
 		} else {
-			handleDisplayCommand(dp.Update(serial), ws, &dp)
+			handleDisplayCommand(dp.Update(serial, true), ws, &dp)
 			encoder.DispatchVolume(ev)
 			scroller.Dispatch(js.Update())
 		}
