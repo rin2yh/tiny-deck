@@ -3,16 +3,16 @@ package layer
 type Layer int
 
 const (
-	NumPad Layer = iota // 初期状態（デフォルト）
-	Game                // ゲーム選択画面
+	Deck Layer = iota // 初期状態（デフォルト）
+	Game              // ゲーム選択画面
 
 	layerCount
 )
 
 func (l Layer) String() string {
 	switch l {
-	case NumPad:
-		return "NumPad"
+	case Deck:
+		return "Deck"
 	case Game:
 		return "Game"
 	default:
@@ -25,14 +25,14 @@ type State struct {
 }
 
 func New() *State {
-	return &State{current: NumPad}
+	return &State{current: Deck}
 }
 
 func (s *State) Current() Layer {
 	return s.current
 }
 
-// Next は NumPad → Game → NumPad と巡回する。
+// Next は Deck → Game → Deck と巡回する。
 func (s *State) Next() {
 	s.current = (s.current + 1) % layerCount
 }
