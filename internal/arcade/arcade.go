@@ -17,6 +17,9 @@ type Game interface {
 	Draw(d Display)
 	// Night は画面を反転表示する状態かどうか。
 	Night() bool
+	// Over はゲームオーバー表示中かどうか。手が空くこのタイミングだけ
+	// 選択画面へ戻る導線を画面に重ねる。
+	Over() bool
 }
 
 // Entry は選択画面に並ぶ 1 項目。ゲームを増やすときは entries に足す。
@@ -26,5 +29,11 @@ type Entry struct {
 }
 
 var entries = []Entry{
-	{Name: "DINOSAUR", New: func(seed uint32) Game { return game.New(seed) }},
+	{Name: "DINOSAUR", New: func(seed uint32) Game { return dinosaur{game.New(seed)} }},
 }
+
+// dinosaur は game.Game に Over を足すだけのアダプタ。ゲーム側の Mode 型を
+// arcade のインターフェースに持ち込まないよう、ここで吸収する。
+type dinosaur struct{ *game.Game }
+
+func (d dinosaur) Over() bool { return d.Mode() == game.ModeGameOver }
