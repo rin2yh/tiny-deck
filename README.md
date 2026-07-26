@@ -9,7 +9,7 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 - [CPU・メモリ使用率をOLEDに表示する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/display/metrics.go)
 - [使用率に応じてLEDマトリクスにバー表示する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/metrics.go)
 - [ロータリーエンコーダーで音量を調節する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/encoder.go)
-- [joystickでマウスカーソルを動かす](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/joystick/joystick.go)
+- [joystickでマウスホイールスクロール（押下中はゆっくり下スクロール）](https://github.com/rin2yh/tiny-deck/blob/main/internal/joystick/scroll.go)
 - [キー入力・長押しでレイヤーを切り替える](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/layer.go)
 - [macOSの通知を検知してLEDを光らせる](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/animation.go)
 - [USB接続で`host_daemon`を自動起動する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/scripts/install.sh)
@@ -29,7 +29,7 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 | プレイ中 | レイヤーキー以外のどのキーでもジャンプ、エンコーダー押し込みで終了して選択画面へ（導線はゲームオーバー画面に `ENC:MENU` として出る） |
 | どちらでも | レイヤーキーの長押しで `NumPad` に戻る |
 
-`Game` レイヤーの間は音量調節・マウス操作・LEDの使用率表示を止める。
+`Game` レイヤーの間は音量調節・ホイールスクロール・LEDの使用率表示を止める。
 ゲーム本体は [rin2yh/dinosaur-game](https://github.com/rin2yh/dinosaur-game) の
 `game` パッケージをそのまま使っていて、`internal/arcade` は選択画面と
 ssd1306 への描画だけを持つ。追加するゲームが 128x64 の 1bit 画面に

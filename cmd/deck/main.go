@@ -34,6 +34,7 @@ func main() {
 
 	enc := encoder.New(machine.GPIO3, machine.GPIO4, machine.GPIO2)
 	js := joystick.NewJoystick(false, true)
+	scroller := joystick.NewScroller()
 	dp := display.New(disp, func() string { return layers.Current().String() })
 	games := arcade.NewLauncher(disp)
 
@@ -51,13 +52,13 @@ func main() {
 
 		ev := enc.Update()
 		if layers.Current() == layer.Game {
-			// ゲームが OLED を占有する間は音量・マウス・LED を止める
+			// ゲームが OLED を占有する間は音量・スクロール・LED を止める
 			dp.Drain(serial)
 			games.Update(jumpPressed(keys), ev.Delta, ev.Pressed)
 		} else {
 			handleDisplayCommand(dp.Update(serial), ws, &dp)
 			encoder.DispatchVolume(ev)
-			joystick.DispatchMouse(js.Update())
+			scroller.Dispatch(js.Update())
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
