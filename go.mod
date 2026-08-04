@@ -3,7 +3,7 @@ module github.com/rin2yh/tiny-deck
 go 1.25.6
 
 require (
-	github.com/rin2yh/dinosaur-game v0.0.0-20260726061726-416f0a6a1cc4
+	github.com/rin2yh/games v0.0.1
 	github.com/shirou/gopsutil/v4 v4.26.2
 	github.com/tinygo-org/pio v0.3.0
 	go.bug.st/serial v1.6.4

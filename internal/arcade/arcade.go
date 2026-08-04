@@ -1,9 +1,9 @@
 // Package arcade は OLED 上で遊べるゲームと、その選択画面を提供する。
-// ゲーム本体は外部モジュール（github.com/rin2yh/dinosaur-game 等）が持ち、
+// ゲーム本体は外部モジュール（github.com/rin2yh/games 等）が持ち、
 // このパッケージは選択・起動・終了と ssd1306 への描画だけを受け持つ。
 package arcade
 
-import "github.com/rin2yh/dinosaur-game/game"
+import "github.com/rin2yh/games/dinosaur/game"
 
 // Display は 128x64 1bit 画面の点灯要求。ゲーム側の描画インターフェースと
 // 同一の型でなければゲームが Game を満たさなくなるため、独自定義ではなく
