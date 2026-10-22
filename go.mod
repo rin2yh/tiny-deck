@@ -1,6 +1,6 @@
 module github.com/rin2yh/tiny-deck
 
-go 1.25.6
+go 1.26.10
 
 require (
 	github.com/rin2yh/games v0.0.1
