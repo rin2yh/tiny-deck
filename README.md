@@ -14,7 +14,7 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 - [macOSの通知を検知してLEDを光らせる](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/animation.go)
 - [USB接続で`host_daemon`を自動起動する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/scripts/install.sh)
 - [Gameレイヤーで選んだゲームをOLEDで遊ぶ](internal/arcade/launcher.go)
-- [OLEDを段階的に減光・消灯する](internal/display/power.go)
+- [OLEDの焼き付き対策として減光・消灯する](internal/display/power.go)
 
 ## 展望
 - 10キーにする
