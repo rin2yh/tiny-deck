@@ -9,14 +9,15 @@ const (
 )
 
 type Event struct {
-	DX, DY  int
-	Click   bool
-	Release bool
+	DX, DY      int
+	Click       bool
+	Release     bool
+	axisChanged bool
 }
 
-// HasActivity reports whether the event contains joystick movement or a click.
+// HasActivity reports whether the joystick position changed or a click occurred.
 func (e Event) HasActivity() bool {
-	return e.DX != 0 || e.DY != 0 || e.Click
+	return e.axisChanged || e.Click
 }
 
 type Joystick struct {
@@ -25,6 +26,7 @@ type Joystick struct {
 	centerX, centerY int
 	invertX, invertY bool
 	btnLast          bool
+	lastDX, lastDY   int
 }
 
 func NewJoystick(invertX, invertY bool) *Joystick {
@@ -55,11 +57,14 @@ func (j *Joystick) Update() Event {
 
 	pressed := !j.btn.Get()
 	ev := Event{
-		DX:      dx,
-		DY:      dy,
-		Click:   pressed && !j.btnLast,
-		Release: !pressed && j.btnLast,
+		DX:          dx,
+		DY:          dy,
+		Click:       pressed && !j.btnLast,
+		Release:     !pressed && j.btnLast,
+		axisChanged: dx != j.lastDX || dy != j.lastDY,
 	}
 	j.btnLast = pressed
+	j.lastDX = dx
+	j.lastDY = dy
 	return ev
 }
