@@ -1,6 +1,10 @@
 package joystick
 
-import "machine"
+import (
+	"machine"
+
+	joystickinput "github.com/rin2yh/tiny-deck/internal/joystick/input"
+)
 
 const (
 	deadzoneRaw = 2000
@@ -8,25 +12,14 @@ const (
 	calSamples  = 8
 )
 
-type Event struct {
-	DX, DY      int
-	Click       bool
-	Release     bool
-	axisChanged bool
-}
-
-// HasActivity reports whether the joystick position changed or a click occurred.
-func (e Event) HasActivity() bool {
-	return e.axisChanged || e.Click
-}
+type Event = joystickinput.Event
 
 type Joystick struct {
 	adcX, adcY       machine.ADC
 	btn              machine.Pin
 	centerX, centerY int
 	invertX, invertY bool
-	btnLast          bool
-	lastDX, lastDY   int
+	input            joystickinput.State
 }
 
 func NewJoystick(invertX, invertY bool) *Joystick {
@@ -56,15 +49,5 @@ func (j *Joystick) Update() Event {
 	dy := scaleAxis(int(j.adcY.Get()), j.centerY, deadzoneRaw, divisorRaw, j.invertY)
 
 	pressed := !j.btn.Get()
-	ev := Event{
-		DX:          dx,
-		DY:          dy,
-		Click:       pressed && !j.btnLast,
-		Release:     !pressed && j.btnLast,
-		axisChanged: dx != j.lastDX || dy != j.lastDY,
-	}
-	j.btnLast = pressed
-	j.lastDX = dx
-	j.lastDY = dy
-	return ev
+	return j.input.Update(dx, dy, pressed)
 }

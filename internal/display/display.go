@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rin2yh/tiny-deck/internal/display/powerstate"
 	"github.com/rin2yh/tiny-deck/internal/serial"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
@@ -24,28 +25,26 @@ const (
 )
 
 type Display struct {
-	oled            *ssd1306.Device
-	reader          serial.Reader
-	metrics         metricsState
-	gopher          gopherAnim
-	layerName       func() string
-	startedAt       time.Time
-	lastActivity    time.Time
-	powerState      powerState
-	hostUnavailable bool
-	lastLayer       string
-	lastLayerLabel  string
-	lastStale       bool
+	oled           *ssd1306.Device
+	reader         serial.Reader
+	metrics        metricsState
+	gopher         gopherAnim
+	layerName      func() string
+	startedAt      time.Time
+	power          powerstate.Controller
+	lastLayer      string
+	lastLayerLabel string
+	lastStale      bool
 }
 
 func New(oled *ssd1306.Device, layerName func() string) Display {
 	now := time.Now()
 	return Display{
-		oled:         oled,
-		layerName:    layerName,
-		gopher:       newGopherAnim(),
-		startedAt:    now,
-		lastActivity: now,
+		oled:      oled,
+		layerName: layerName,
+		gopher:    newGopherAnim(),
+		startedAt: now,
+		power:     powerstate.New(now),
 	}
 }
 
@@ -89,7 +88,7 @@ func (d *Display) Update(s machine.Serialer, draw bool) (Command, bool) {
 	}
 
 	d.lastStale = stale
-	if draw && d.powerState != powerOff {
+	if draw && d.power.State() != powerstate.Off {
 		d.draw(stale)
 	}
 	if staleChanged && stale {
@@ -104,8 +103,7 @@ func (d *Display) Update(s machine.Serialer, draw bool) (Command, bool) {
 // Activity records a physical input and restores normal brightness. The return
 // value reports whether the OLED was off and needs its current screen redrawn.
 func (d *Display) Activity(now time.Time) bool {
-	d.lastActivity = now
-	return d.setPowerState(powerNormal)
+	return d.applyPowerTransition(d.power.Activity(now))
 }
 
 // Redraw refreshes the regular status screen after the OLED has been turned on.
