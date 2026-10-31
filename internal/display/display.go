@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rin2yh/tiny-deck/internal/display/powerstate"
 	"github.com/rin2yh/tiny-deck/internal/serial"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/tinyfont"
@@ -29,13 +30,22 @@ type Display struct {
 	metrics        metricsState
 	gopher         gopherAnim
 	layerName      func() string
+	startedAt      time.Time
+	power          powerstate.Controller
 	lastLayer      string
 	lastLayerLabel string
 	lastStale      bool
 }
 
 func New(oled *ssd1306.Device, layerName func() string) Display {
-	return Display{oled: oled, layerName: layerName, gopher: newGopherAnim()}
+	now := time.Now()
+	return Display{
+		oled:      oled,
+		layerName: layerName,
+		gopher:    newGopherAnim(),
+		startedAt: now,
+		power:     powerstate.New(now),
+	}
 }
 
 func (d *Display) CPUPercent() float32 { return d.metrics.cpu }
@@ -44,7 +54,7 @@ func (d *Display) MemPercent() float32 { return d.metrics.mem }
 // Update はホストからの行を取り込み、必要なら OLED を描き直す。
 // draw が false のときは描画だけを止める。OLED をゲームに明け渡している間も
 // シリアルを詰まらせず、指標を最新に保つために使う。
-func (d *Display) Update(s machine.Serialer, draw bool) Command {
+func (d *Display) Update(s machine.Serialer, draw bool) (Command, bool) {
 	now := time.Now()
 	gopherTicked := d.gopher.tick(now)
 	currentLayer := d.layerName()
@@ -54,7 +64,7 @@ func (d *Display) Update(s machine.Serialer, draw bool) Command {
 	for d.reader.Read(s) {
 		l := d.reader.Line()
 		if l == "notify" {
-			return CommandNotify
+			return CommandNotify, false
 		}
 		if strings.HasPrefix(l, prefixCPU) || strings.HasPrefix(l, prefixMem) {
 			if d.metrics.tryUpdate(l, now) {
@@ -70,23 +80,34 @@ func (d *Display) Update(s machine.Serialer, draw bool) Command {
 
 	stale := d.metrics.isStale(now)
 	staleChanged := stale != d.lastStale
+	unavailable := stale && (d.metrics.hasData || now.Sub(d.startedAt) >= metricsTimeout)
+	woke := d.updatePower(now, unavailable)
 
-	if !metricsChanged && !layerChanged && !gopherTicked && !staleChanged {
-		return CommandNone
+	if !metricsChanged && !layerChanged && !gopherTicked && !staleChanged && !woke {
+		return CommandNone, false
 	}
 
 	d.lastStale = stale
-	if draw {
+	if draw && d.power.State() != powerstate.Off {
 		d.draw(stale)
 	}
 	if staleChanged && stale {
-		return CommandMetricsStale
+		return CommandMetricsStale, woke
 	}
 	if metricsChanged {
-		return CommandMetricsChanged
+		return CommandMetricsChanged, woke
 	}
-	return CommandNone
+	return CommandNone, woke
 }
+
+// Activity records a physical input and restores normal brightness. The return
+// value reports whether the OLED was off and needs its current screen redrawn.
+func (d *Display) Activity(now time.Time) bool {
+	return d.applyPowerTransition(d.power.Activity(now))
+}
+
+// Redraw refreshes the regular status screen after the OLED has been turned on.
+func (d *Display) Redraw() { d.draw(d.metrics.isStale(time.Now())) }
 
 func (d *Display) draw(stale bool) {
 	d.oled.ClearBuffer()

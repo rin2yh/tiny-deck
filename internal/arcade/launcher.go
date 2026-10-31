@@ -66,6 +66,17 @@ func (l *Launcher) Leave() {
 	l.setNight(false)
 }
 
+// Refresh resends the current screen after the OLED has been turned on.
+func (l *Launcher) Refresh() {
+	l.sent = false
+	if l.mode == modeMenu {
+		l.menuDirty = false
+		l.drawMenu()
+		return
+	}
+	l.drawGame()
+}
+
 // Update は 1 ループ分の入力を処理し、必要なら画面を描き直す。
 // keyDown は操作キーのいずれかが押されているか、rotate はエンコーダーの
 // 回転ノッチ数、decide は押し込みの押下エッジ（選択画面では決定、

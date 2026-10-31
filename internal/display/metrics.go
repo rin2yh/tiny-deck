@@ -37,31 +37,30 @@ func parsePercent(line, prefix string) (float32, bool) {
 }
 
 func (m *metricsState) tryUpdate(line string, now time.Time) bool {
+	var changed bool
 	switch {
 	case strings.HasPrefix(line, prefixCPU):
-		if line == m.lastCPULine {
+		v, ok := parsePercent(line, prefixCPU)
+		if !ok {
 			return false
 		}
+		changed = line != m.lastCPULine || m.isStale(now)
 		m.lastCPULine = line
-		if v, ok := parsePercent(line, prefixCPU); ok {
-			m.cpu = v
-			m.lastAt = now
-			m.hasData = true
-			return true
-		}
+		m.cpu = v
 	case strings.HasPrefix(line, prefixMem):
-		if line == m.lastMemLine {
+		v, ok := parsePercent(line, prefixMem)
+		if !ok {
 			return false
 		}
+		changed = line != m.lastMemLine || m.isStale(now)
 		m.lastMemLine = line
-		if v, ok := parsePercent(line, prefixMem); ok {
-			m.mem = v
-			m.lastAt = now
-			m.hasData = true
-			return true
-		}
+		m.mem = v
+	default:
+		return false
 	}
-	return false
+	m.lastAt = now
+	m.hasData = true
+	return changed
 }
 
 func (m *metricsState) isStale(now time.Time) bool {
