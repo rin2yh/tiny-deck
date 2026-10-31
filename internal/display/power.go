@@ -8,7 +8,7 @@ import (
 
 const (
 	dimAfter = time.Minute
-	offAfter = 5 * time.Minute
+	offAfter = 3 * time.Minute
 	// These are SSD1306 contrast-register values, not percentages of panel luminance.
 	dimContrast    = 0x20
 	normalContrast = 0xCF
