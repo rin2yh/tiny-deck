@@ -60,7 +60,7 @@ func main() {
 			games.Refresh()
 		}
 
-		if anyKeyPressed(keys) || ev.Delta != 0 || ev.Pressed || joystickMoved(jsEvent) {
+		if anyKeyPressed(keys) || ev.Delta != 0 || ev.Pressed || jsEvent.HasActivity() {
 			if dp.Activity(time.Now()) {
 				if layers.Current() == layer.Game {
 					games.Refresh()
@@ -89,10 +89,6 @@ func anyKeyPressed(keys []bool) bool {
 		}
 	}
 	return false
-}
-
-func joystickMoved(ev joystick.Event) bool {
-	return ev.DX != 0 || ev.DY != 0 || ev.Click
 }
 
 // jumpPressed はレイヤーキー以外のいずれかが押されているかを返す。

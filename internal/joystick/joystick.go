@@ -14,6 +14,11 @@ type Event struct {
 	Release bool
 }
 
+// HasActivity reports whether the event contains joystick movement or a click.
+func (e Event) HasActivity() bool {
+	return e.DX != 0 || e.DY != 0 || e.Click
+}
+
 type Joystick struct {
 	adcX, adcY       machine.ADC
 	btn              machine.Pin
