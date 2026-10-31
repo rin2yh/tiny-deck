@@ -51,18 +51,48 @@ func main() {
 		}
 
 		ev := enc.Update()
+		jsEvent := js.Update()
+		drawDisplay := layers.Current() != layer.Game
+		cmd, woke := dp.Update(serial, drawDisplay)
+		if drawDisplay {
+			handleDisplayCommand(cmd, ws, &dp)
+		} else if woke {
+			games.Refresh()
+		}
+
+		if anyKeyPressed(keys) || ev.Delta != 0 || ev.Pressed || joystickMoved(jsEvent) {
+			if dp.Activity(time.Now()) {
+				if layers.Current() == layer.Game {
+					games.Refresh()
+				} else {
+					dp.Redraw()
+				}
+			}
+		}
+
 		if layers.Current() == layer.Game {
 			// ゲームが OLED を占有する間は音量・スクロール・LED を止める。
 			// 指標だけは取り込んで、戻ったときに最新の値が出るようにする。
-			dp.Update(serial, false)
 			games.Update(jumpPressed(keys), ev.Delta, ev.Pressed)
 		} else {
-			handleDisplayCommand(dp.Update(serial, true), ws, &dp)
 			encoder.DispatchVolume(ev)
-			scroller.Dispatch(js.Update())
+			scroller.Dispatch(jsEvent)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+}
+
+func anyKeyPressed(keys []bool) bool {
+	for _, pressed := range keys {
+		if pressed {
+			return true
+		}
+	}
+	return false
+}
+
+func joystickMoved(ev joystick.Event) bool {
+	return ev.DX != 0 || ev.DY != 0 || ev.Click
 }
 
 // jumpPressed はレイヤーキー以外のいずれかが押されているかを返す。

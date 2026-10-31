@@ -14,6 +14,7 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 - [macOSの通知を検知してLEDを光らせる](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/internal/keyboard/animation.go)
 - [USB接続で`host_daemon`を自動起動する](https://github.com/rin2yh/tiny-deck/blob/1c83f4b4767cc1c7cc81922803662c129790b809/scripts/install.sh)
 - [Gameレイヤーで選んだゲームをOLEDで遊ぶ](internal/arcade/launcher.go)
+- [OLEDを段階的に減光・消灯する](internal/display/power.go)
 
 ## 展望
 - 10キーにする
@@ -35,6 +36,14 @@ Xxx-deckみたいにMacをちょっとだけ便利にします。
 ssd1306 への描画だけを持つ。追加するゲームが 128x64 の 1bit 画面に
 `SetPixel` で描き、`Update(pressed bool)` で 1 フレーム進む形なら
 `internal/arcade/arcade.go` の `entries` に足すだけで選択画面に並ぶ。
+
+## OLEDの減光・消灯
+
+OLEDの固定表示による焼き付きリスクを抑えるため、最後のキー・エンコーダー・
+ジョイスティック操作から1分後に減光し、5分後に消灯する。操作すると通常の明るさに戻る。
+ホストからCPU・メモリ使用率が5秒以上届かない場合も消灯し、受信が再開すると通常表示に戻る。
+これはMacのスリープやシリアル通信断をメトリクスの停止で検知する仕組みである。
+明るさの値と時間は `internal/display/power.go` の定数で変更できる。
 
 ## セットアップ
 
